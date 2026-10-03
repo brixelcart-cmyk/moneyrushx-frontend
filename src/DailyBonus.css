@@ -1,0 +1,49 @@
+.daily-page { display: grid; gap: 15px; padding-bottom: 12px; text-align: left; }
+.daily-heading { display: flex; align-items: center; gap: 12px; }
+.daily-heading-icon { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid #1d593a; border-radius: 14px; background: #123d28; color: #36df8b; }
+.daily-heading-icon svg { width: 22px; }
+.daily-heading p { margin: 0 0 2px; color: #819189; font-size: 10px; font-weight: 700; letter-spacing: 1.4px; }
+.daily-heading h2 { margin: 0; color: #fff; font-size: 24px; font-weight: 750; letter-spacing: -.4px; }
+.daily-today-card { padding: 18px; border: 1px solid #1d593a; border-radius: 20px; background: radial-gradient(ellipse at 90% 0%, #1b5635 0%, #123222 43%, #0d2118 100%); }
+.daily-today-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: #a1c1ad; font-size: 10px; font-weight: 800; letter-spacing: 1.1px; }
+.daily-streak-pill { padding: 6px 9px; border: 1px solid #34694b; border-radius: 99px; color: #d5f5e1; font-size: 10px; letter-spacing: 0; }
+.daily-streak-pill span { color: #63ed9f; }
+.daily-today-label { margin: 20px 0 3px; color: #a8b9af; font-size: 12px; }
+.daily-today-amount { display: block; color: #fff; font-size: 40px; line-height: 1.15; letter-spacing: -1px; }
+.daily-claim-button { width: 100%; min-height: 46px; display: flex; justify-content: center; align-items: center; gap: 7px; margin-top: 17px; border: 0; border-radius: 12px; background: #20c978; color: #06110c; font-size: 14px; font-weight: 800; cursor: pointer; }
+.daily-claim-button svg { width: 17px; }
+.daily-claim-button:disabled { color: #a6b3ab; background: #26382e; cursor: default; }
+.daily-next-reward { margin: 10px 0 0; color: #9db5a5; font-size: 11px; text-align: center; }
+.daily-progress-card, .daily-days-card { padding: 16px; border: 1px solid #1c3027; border-radius: 18px; background: #101c17; }
+.daily-progress-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.daily-progress-heading span { color: #819189; font-size: 9px; font-weight: 800; letter-spacing: 1.25px; }
+.daily-progress-heading h3 { margin: 4px 0 0; color: #fff; font-size: 21px; }
+.daily-progress-heading h3 small { color: #819189; font-size: 12px; font-weight: 500; }
+.daily-progress-heading > strong { color: #36df8b; font-size: 13px; }
+.daily-progress-track { height: 8px; overflow: hidden; margin-top: 14px; border-radius: 99px; background: #26352d; }
+.daily-progress-track span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #20c978, #75efa9); transition: width .25s ease; }
+.daily-progress-card > p { margin: 9px 0 0; color: #819189; font-size: 10px; }
+.daily-days-title { display: flex; justify-content: space-between; align-items: center; }
+.daily-days-title h3 { margin: 0; color: #fff; font-size: 15px; }
+.daily-days-title p { margin: 4px 0 0; color: #819189; font-size: 10px; }
+.daily-days-title > svg { width: 17px; color: #65776c; }
+.daily-days-list { display: grid; gap: 6px; margin: 14px 0 0; padding: 0; list-style: none; }
+.daily-day { min-height: 49px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 7px 10px; border: 1px solid transparent; border-radius: 12px; background: #0b1511; }
+.daily-day.is-current { border-color: #277348; background: #10291c; }
+.daily-day.is-claimed .daily-day-icon, .daily-day.is-current .daily-day-icon { color: #36df8b; }
+.daily-day-icon { display: grid; place-items: center; color: #607067; }
+.daily-day-icon svg { width: 17px; height: 17px; stroke-width: 2; }
+.daily-day-label { display: grid; gap: 1px; }
+.daily-day-label strong { color: #e9f0ec; font-size: 11px; }
+.daily-day-label small { color: #788a80; font-size: 9px; }
+.daily-day.is-current .daily-day-label small { color: #65db95; }
+.daily-day-reward { color: #d9e4dd; font-size: 12px; }
+.daily-day:not(.is-claimed):not(.is-current) .daily-day-reward { color: #839188; }
+.daily-reset-note { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #384333; border-radius: 13px; background: #171e16; }
+.daily-reset-note > svg { flex: 0 0 auto; width: 16px; margin-top: 1px; color: #c7c77b; }
+.daily-reset-note p { color: #a4aa95; font-size: 10px; line-height: 1.5; }
+.daily-reset-note strong { color: #e2e0a2; }
+.daily-message { padding: 10px 12px; border-radius: 10px; font-size: 12px; }
+.daily-error { border: 1px solid #744343; color: #ffb8b8; background: #311c1c; }
+.daily-success { border: 1px solid #286746; color: #baf4d0; background: #10281b; }
+@media (max-width: 360px) { .daily-today-card, .daily-progress-card, .daily-days-card { padding: 13px; } .daily-today-amount { font-size: 36px; } }
