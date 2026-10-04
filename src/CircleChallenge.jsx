@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Award, CircleDashed, LockKeyhole, Medal, RotateCcw, Sparkles, Target, Trophy, Users, X } from 'lucide-react'
-import { API_BASE_URL } from './api.js'
+import { authenticatedFetch } from './api.js'
 import './CircleChallenge.css'
 
 const CANVAS_SIZE = 1000
@@ -42,7 +42,7 @@ export default function CircleChallenge({ initData }) {
   const [liveEstimate, setLiveEstimate] = useState(0)
   const [result, setResult] = useState(null)
   const [adMessage, setAdMessage] = useState('')
-  const canDraw = Boolean(challenge?.challenge?.target) && !busy
+  const canDraw = Boolean(challenge?.challenge?.target) && !busy && !challenge?.own_result && !challenge?.pending_result
 
   const loadChallenge = useCallback(async () => {
     const requestId = requestRef.current.id + 1
@@ -60,10 +60,7 @@ export default function CircleChallenge({ initData }) {
     setLoading(true)
     setError('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/circle-challenge/today`, {
-        headers: { 'X-Telegram-Init-Data': initData },
-        signal: controller.signal,
-      })
+      const response = await authenticatedFetch('/api/circle-challenge/today', initData, { signal: controller.signal })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.message || 'Could not load Circle Challenge.')
       const target = payload?.challenge?.target
@@ -139,15 +136,9 @@ export default function CircleChallenge({ initData }) {
       context.beginPath()
       context.moveTo(a.x, a.y)
       context.lineTo(b.x, b.y)
-      context.strokeStyle = '#a5ffd0'
-      context.lineWidth = 12
-      context.shadowColor = '#22ef91'
-      context.shadowBlur = 22
-      context.stroke()
-      context.strokeStyle = '#eafff3'
-      context.lineWidth = 5
-      context.shadowColor = '#baffd5'
-      context.shadowBlur = 7
+      context.strokeStyle = '#73c99a'
+      context.lineWidth = 7
+      context.shadowBlur = 0
       context.stroke()
     }
     renderedCountRef.current = Math.max(0, points.length - 1)
@@ -182,55 +173,77 @@ export default function CircleChallenge({ initData }) {
     if (!frameRef.current) frameRef.current = requestAnimationFrame(() => { frameRef.current = 0; renderStroke() })
   }
 
-  function stopDrawing() { drawingRef.current = false; setIsDrawing(false) }
-
-  async function verifyUnlock() {
-    if (!initData || !challenge?.challenge_date_utc || busy) return
-    setBusy(true); setError(''); setMessage(''); setAdMessage('')
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/circle-challenge/unlock`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData }, body: JSON.stringify({ challenge_date: challenge.challenge_date_utc }) })
-      const payload = await response.json()
-      if (!response.ok) {
-        const message = response.status === 403
-          ? 'Ad provider not connected yet. No verified rewarded ad record was found, so another attempt was not granted.'
-          : payload.message || 'Could not verify the ad unlock. No additional attempt was granted.'
-        throw new Error(message)
-      }
-      setAdMessage('A verified ad unlock is already recorded. Another attempt is not available today.')
-      await loadChallenge()
-    } catch (cause) { setAdMessage(cause.message || 'Ad provider not connected yet. No verified ad was found.') } finally { setBusy(false) }
+  function stopDrawing() {
+    if (!drawingRef.current) return
+    drawingRef.current = false
+    setIsDrawing(false)
+    const points = pointsRef.current
+    if (points.length >= 18) {
+      const previewScore = estimateAccuracy(points, challenge?.challenge?.target)
+      setLiveEstimate(previewScore)
+      setResult({ preview: true, practice: false, score: previewScore })
+    }
   }
 
-  async function submit(practice) {
+  async function submitPractice() {
     if (!initData || !challenge?.challenge_date_utc || busy) return
     const points = pointsRef.current
     if (points.length < 18) { setError('Draw a complete circle with one continuous stroke first.'); return }
     setBusy(true); setError(''); setMessage('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/circle-challenge/${practice ? 'practice' : 'submit'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData }, body: JSON.stringify({ challenge_date: challenge.challenge_date_utc, points }) })
+      const response = await authenticatedFetch('/api/circle-challenge/practice', initData, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge_date: challenge.challenge_date_utc, points }) })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.message || 'Could not calculate your score.')
       if (!Number.isFinite(Number(payload.score))) throw new Error('The server response did not include a valid score.')
-      setResult({ practice, score: Number(payload.score), position: payload.position ?? null })
-      if (practice) setMessage('Practice score calculated. It does not affect the leaderboard or prizes.')
-      else await loadChallenge()
+      setResult({ practice: true, preview: false, score: Number(payload.score), position: null })
+      setMessage('Practice score calculated by the server. It does not affect the leaderboard or prizes.')
       pointsRef.current = []
       setLiveEstimate(0)
       drawGuide()
     } catch (cause) { setError(cause.message || 'Could not calculate your score.') } finally { setBusy(false) }
   }
 
-  async function confirmOfficialScore() {
+  async function watchAdAndSubmit() {
     if (!initData || !challenge?.challenge_date_utc || busy) return
-    setBusy(true); setError('')
+    const points = pointsRef.current
+    if (!challenge.pending_result && points.length < 18) { setError('Draw a complete circle with one continuous stroke first.'); return }
+    setBusy(true); setError(''); setMessage(''); setAdMessage('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/circle-challenge/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData }, body: JSON.stringify({ challenge_date: challenge.challenge_date_utc }) })
+      if (!challenge.pending_result) {
+        if (adUnlockRequired && !challenge.official_unlocked) {
+          const unlockResponse = await authenticatedFetch('/api/circle-challenge/unlock', initData, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ challenge_date: challenge.challenge_date_utc }),
+          })
+          const unlockPayload = await unlockResponse.json()
+          if (!unlockResponse.ok) {
+            throw new Error(unlockResponse.status === 403
+              ? 'No verified rewarded ad session is available. An ad provider must record a completed session before your score can be submitted.'
+              : unlockPayload.message || 'Could not verify the rewarded ad.')
+          }
+        }
+        const scoreResponse = await authenticatedFetch('/api/circle-challenge/submit', initData, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge_date: challenge.challenge_date_utc, points }),
+        })
+        const scorePayload = await scoreResponse.json()
+        if (!scoreResponse.ok) throw new Error(scorePayload.message || 'Could not verify your drawing.')
+      }
+      const response = await authenticatedFetch('/api/circle-challenge/confirm', initData, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge_date: challenge.challenge_date_utc }),
+      })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.message || 'Could not submit your official score.')
-      setResult(null)
-      setMessage(`Official score submitted${payload.position ? ` · leaderboard position #${payload.position}` : ''}.`)
+      setResult({ preview: false, practice: false, score: Number(payload.score), position: payload.position ?? null })
+      setMessage(`Official score verified by the server${payload.position ? ` · Your Rank: #${payload.position}` : ''}.`)
+      pointsRef.current = []
+      setLiveEstimate(0)
       await loadChallenge()
-    } catch (cause) { setError(cause.message || 'Could not submit your official score.') } finally { setBusy(false) }
+    } catch (cause) { setAdMessage(cause.message || 'Could not verify the rewarded ad and submit your score.') } finally { setBusy(false) }
   }
 
   const pool = challenge?.prize_pool
@@ -260,26 +273,21 @@ export default function CircleChallenge({ initData }) {
           {!challenge && <span className="circle-canvas-loading">{loading ? 'Loading today’s target…' : error || 'Today’s challenge is unavailable.'}</span>}
           {challenge?.own_result && <span className="circle-canvas-done">Official score submitted</span>}
         </div>
-        <div className="circle-submit-actions">
-          <button className="circle-practice-button" type="button" disabled={busy || loading || !challenge} onClick={() => submit(true)}><RotateCcw aria-hidden="true" />Practice</button>
-          <button className="circle-submit-button" type="button" disabled={busy || loading || !challenge?.official_unlocked || challenge?.official_attempt_used || Boolean(challenge?.pending_result)} onClick={() => submit(false)}>{challenge?.official_attempt_used ? 'Attempt submitted' : challenge?.pending_result ? 'Score pending confirmation' : busy ? 'Scoring…' : 'Score official attempt'}</button>
-        </div>
-        {adUnlockRequired ? <div className="circle-unlock-note"><LockKeyhole aria-hidden="true" /><p>{challenge?.official_unlocked ? 'Official attempt unlocked. Your score is added only when you choose Submit Score.' : 'Official entry requires one verified rewarded ad. Verify after a qualifying rewarded ad is recorded.'}</p></div> : <div className="circle-unlock-note"><p>Testing mode: official attempts are available without an ad. Scores are still calculated by the server.</p></div>}
-        {adUnlockRequired && challenge && !challenge.official_unlocked && !challenge.official_attempt_used && <button className="circle-unlock-button" type="button" disabled={busy || loading} onClick={verifyUnlock}>Verify ad unlock</button>}
+        <div className="circle-unlock-note"><LockKeyhole aria-hidden="true" /><p>{adUnlockRequired ? 'A verified rewarded ad session is required. The server checks the ad record before scoring and submitting your entry.' : 'Your official score is calculated and verified by the server.'}</p></div>
         {adMessage && <p className="circle-message circle-error" role="status">{adMessage}</p>}
         {message && <p className="circle-message circle-success" role="status">{message}</p>}
         {error && <p className="circle-message circle-error" role="alert">{error}</p>}
         {error && !loading && <button className="circle-unlock-button" type="button" onClick={loadChallenge}>Retry challenge</button>}
-        {challenge?.pending_result && !result && <button className="circle-unlock-button" type="button" onClick={() => setResult({ practice: false, score: Number(challenge.pending_result.score), position: null })}>Review pending score · {Number(challenge.pending_result.score).toFixed(2)}%</button>}
-        <p className="circle-your-score"><Target aria-hidden="true" />{own ? <>{own.status === 'disqualified' ? 'Your entry was disqualified' : <>Your score: <strong>{Number(own.score).toFixed(2)}%</strong>{own.position ? ` · #${own.position}` : ''}</>}</> : 'You have not submitted an official score today.'}</p>
+        {challenge?.pending_result && !result && <button className="circle-submit-button circle-unlock-button" type="button" disabled={busy} onClick={watchAdAndSubmit}>{busy ? 'Verifying and submitting…' : 'Finish verified submission'}</button>}
+        <p className="circle-your-score"><Target aria-hidden="true" />{own ? <>{own.status === 'disqualified' ? 'Your entry was disqualified' : <>Official score: <strong>{Number(own.score).toFixed(2)}%</strong>{own.position ? ` · Your Rank: #${own.position}` : ''}</>}</> : 'You have not submitted an official score today.'}</p>
       </section>
       <section className="circle-board-card">
         <div className="circle-section-heading"><div><h3><Trophy aria-hidden="true" /> Today’s leaderboard</h3><p>Highest score wins · ties go to the earlier submission</p></div><Users aria-hidden="true" /></div>
         {challenge?.leaderboard?.length ? <ol className="circle-board-list">{challenge.leaderboard.map((entry) => <li key={`${entry.position}-${entry.display_name}`} className={own && Number(own.position) === entry.position ? 'circle-board-self' : ''}><span className={`circle-rank rank-${entry.position}`}>{entry.position <= 3 ? <Medal aria-hidden="true" /> : entry.position}</span><span className="circle-player-name">{entry.display_name}</span><strong>{Number(entry.score).toFixed(2)}%</strong></li>)}</ol> : <p className="circle-board-empty">No official scores yet. Be the first to take today’s challenge.</p>}
       </section>
       <p className="circle-prize-footnote"><Award aria-hidden="true" /> Prizes are calculated by the server and reviewed after the daily leaderboard is finalized. They are not paid automatically.</p>
-      {result && <div className="circle-modal-backdrop" role="presentation"><section className="circle-result-modal" role="dialog" aria-modal="true" aria-labelledby="circle-result-title"><button className="circle-modal-close" type="button" aria-label="Close result" onClick={() => setResult(null)}><X /></button><div className="circle-result-orbit"><CircleDashed aria-hidden="true" /></div><p className="circle-result-eyebrow">{result.practice ? 'PRACTICE COMPLETE' : 'CHALLENGE COMPLETE'}</p><h2 id="circle-result-title">{result.practice ? 'Practice Score' : 'Your Score'}</h2><strong className="circle-result-score">{result.score.toFixed(2)}<small>%</small></strong><p className="circle-result-copy">{result.practice ? 'Practice only · no leaderboard entry or prizes' : 'Server-calculated accuracy. Your result is ready.'}</p>
-        {result.practice ? <button className="circle-modal-primary" type="button" onClick={() => { setResult(null); pointsRef.current = []; drawGuide() }}>Try Again</button> : <><button className="circle-modal-primary" type="button" disabled={busy} onClick={confirmOfficialScore}>{busy ? 'Submitting…' : 'Submit Score'}</button>{adUnlockRequired && <button className="circle-modal-secondary" type="button" disabled={busy} onClick={verifyUnlock}>Watch Ad &amp; Try Again</button>}{error && <p className="circle-modal-ad-message" role="alert">{error}</p>}{adMessage && <p className="circle-modal-ad-message" role="status">{adMessage}</p>}<p className="circle-modal-footnote">Your score joins today’s leaderboard only after you submit it.</p></>}
+      {result && <div className="circle-modal-backdrop" role="presentation"><section className="circle-result-modal" role="dialog" aria-modal="true" aria-labelledby="circle-result-title"><button className="circle-modal-close" type="button" aria-label="Close result" onClick={() => setResult(null)}><X /></button><div className="circle-result-orbit"><CircleDashed aria-hidden="true" /></div><p className="circle-result-eyebrow">{result.practice ? 'PRACTICE COMPLETE' : result.preview ? 'DRAWING PREVIEW' : 'SERVER VERIFIED'}</p><h2 id="circle-result-title">{result.practice ? 'Practice Score' : result.preview ? 'Preview Score' : 'Official Score'}</h2><strong className="circle-result-score">{result.score.toFixed(2)}<small>%</small></strong><p className="circle-result-copy">{result.practice ? 'Practice only. This attempt does not affect the leaderboard.' : result.preview ? 'Estimate only. Your official score is calculated by the server after ad verification.' : 'Server verified'}{result.position ? ` · Your Rank: #${result.position}` : ''}</p>
+        {result.practice ? <button className="circle-modal-primary" type="button" onClick={() => { setResult(null); pointsRef.current = []; setLiveEstimate(0); drawGuide() }}>Draw Again</button> : result.preview ? <><button className="circle-modal-primary" type="button" disabled={busy || challenge?.official_attempt_used} onClick={watchAdAndSubmit}>{busy ? 'Verifying ad and submitting…' : adUnlockRequired ? 'Watch Ad & Submit Score' : 'Submit Official Score'}</button><button className="circle-modal-secondary" type="button" disabled={busy} onClick={submitPractice}><RotateCcw aria-hidden="true" /> Save as practice only</button>{error && <p className="circle-modal-ad-message" role="alert">{error}</p>}{adMessage && <p className="circle-modal-ad-message" role="status">{adMessage}</p>}<p className="circle-modal-footnote">The preview never enters the leaderboard. A genuine verified ad record is required before official submission.</p></> : <><p className="circle-modal-footnote">Your result is saved to today’s leaderboard. <strong>Your Rank: #{result.position ?? '—'}</strong></p><button className="circle-modal-primary" type="button" onClick={() => setResult(null)}>View leaderboard</button></>}
       </section></div>}
     </main>
   )

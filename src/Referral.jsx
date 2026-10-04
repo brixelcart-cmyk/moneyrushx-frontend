@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, Gift, Send, Users, UserRoundPlus } from 'lucide-react'
-import { API_BASE_URL } from './api.js'
+import { authenticatedFetch } from './api.js'
 import './Referral.css'
 
 
@@ -28,7 +28,7 @@ export default function Referral({ initData }) {
     const controller = new AbortController()
     requestRef.current = controller
     try {
-      const response = await fetch(`${API_BASE_URL}/api/referrals`, { headers: { 'X-Telegram-Init-Data': initData }, signal: controller.signal })
+      const response = await authenticatedFetch('/api/referrals', initData, { signal: controller.signal })
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || 'Could not load referrals.')
       setData(result)

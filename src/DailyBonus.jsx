@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Check, ChevronRight, Circle, Gift, RotateCcw } from 'lucide-react'
-import { API_BASE_URL } from './api.js'
+import { authenticatedFetch } from './api.js'
 import './DailyBonus.css'
 
 const REWARDS = ['0.10', '0.15', '0.20', '0.25', '0.30', '0.40', '0.60']
@@ -25,9 +25,7 @@ export default function DailyBonus({ initData, onBalanceUpdate }) {
     }
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/daily-bonus/status`, {
-        headers: { 'X-Telegram-Init-Data': initData },
-      })
+      const response = await authenticatedFetch('/api/daily-bonus/status', initData)
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || 'Could not load daily bonus.')
       setStatus(result)
@@ -50,9 +48,8 @@ export default function DailyBonus({ initData, onBalanceUpdate }) {
     setError('')
     setNotice('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/daily-bonus/claim`, {
+      const response = await authenticatedFetch('/api/daily-bonus/claim', initData, {
         method: 'POST',
-        headers: { 'X-Telegram-Init-Data': initData },
       })
       const result = await response.json()
       if (result.success && result.claimed_reward_usd) {

@@ -47,3 +47,18 @@
 .daily-error { border: 1px solid #744343; color: #ffb8b8; background: #311c1c; }
 .daily-success { border: 1px solid #286746; color: #baf4d0; background: #10281b; }
 @media (max-width: 360px) { .daily-today-card, .daily-progress-card, .daily-days-card { padding: 13px; } .daily-today-amount { font-size: 36px; } }
+.daily-heading-icon, .daily-today-card, .daily-progress-card, .daily-days-card { border-color: var(--border); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+.daily-heading-icon { color: var(--accent-strong); }
+.daily-heading p, .daily-today-label, .daily-progress-card > p, .daily-days-title p, .daily-next-reward { color: var(--text-muted); }
+.daily-heading h2, .daily-today-amount, .daily-progress-heading h3, .daily-days-title h3 { color: var(--text); }
+.daily-streak-pill { border-color: var(--border); background: var(--surface-raised); color: var(--text-muted); }
+.daily-claim-button { border: 1px solid #3d7658; border-radius: var(--radius-control); background: #254633; color: #e5f4eb; }
+.daily-claim-button:disabled { border-color: var(--border); background: var(--surface-raised); color: var(--text-muted); }
+.daily-progress-track span { background: var(--accent); }
+.daily-day, .daily-day.is-current { border-color: var(--border); border-radius: 11px; background: var(--surface-muted); }
+.daily-day.is-current { outline: 1px solid #41664d; }
+.daily-day.is-claimed .daily-day-icon, .daily-day.is-current .daily-day-icon, .daily-day.is-current .daily-day-label small { color: var(--accent-strong); }
+.daily-reset-note { border-color: var(--border); border-radius: 12px; background: var(--surface-raised); }
+.daily-reset-note p, .daily-reset-note strong { color: var(--text-muted); }
+.daily-reset-note > svg { color: var(--accent-strong); }
+.daily-success { border-color: #35523f; background: #17231c; color: #b7dbc3; }

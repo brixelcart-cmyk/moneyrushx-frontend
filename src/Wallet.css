@@ -30,6 +30,21 @@
   background: #101c17;
 }
 
+.wallet-balance-card,
+.wallet-form,
+.withdrawal-history,
+.withdrawal-item { border-color: var(--border); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+.wallet-heading h2, .wallet-form h3, .withdrawal-history h3 { color: var(--text); }
+.wallet-heading p, .wallet-minimum, .wallet-empty, .wallet-balance-card p { color: var(--text-muted); line-height: 1.5; }
+.wallet-balance-card strong { color: var(--accent-strong); }
+.wallet-form label { color: #d5ded9; }
+.wallet-form input, .wallet-form select { border-color: var(--border); border-radius: var(--radius-control); background: var(--surface-muted); }
+.status-pending, .status-under_review { background: #2a2b23; color: #ddd4aa; }
+.status-paid, .status-completed, .status-approved { background: #20362a; color: #a5d9b8; }
+.status-rejected, .status-cancelled { background: #382526; color: #e0aaaa; }
+.wallet-submit { border-color: #3d7658; background: #254633; color: #e5f4eb; }
+.cancel-withdrawal { border-radius: var(--radius-control); }
+
 .wallet-balance-card p {
   margin: 0 0 7px;
   color: #9aada3;

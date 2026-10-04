@@ -13,7 +13,7 @@ import Wallet from './Wallet.jsx'
 import Referral from './Referral.jsx'
 import DailyBonus from './DailyBonus.jsx'
 import CircleChallenge from './CircleChallenge.jsx'
-import { API_BASE_URL } from './api.js'
+import { authenticatedFetch, getTelegramInitData } from './api.js'
 import './App.css'
 
 function formatUsd(value) {
@@ -25,48 +25,53 @@ function formatUsd(value) {
 
 function App() {
   const tg = window.Telegram?.WebApp
+  const [initData, setInitData] = useState('')
   const [user, setUser] = useState(null)
   const [activeView, setActiveView] = useState('home')
-  const [status, setStatus] = useState(() => (tg?.initData ? 'loading' : 'error'))
+  const [status, setStatus] = useState('loading')
   const updateBalance = useCallback((balance) => {
     setUser((current) => current ? { ...current, balance } : current)
   }, [])
   const [errorMessage, setErrorMessage] = useState(() => {
     if (!tg) return 'Open MoneyRushX from Telegram to load your account.'
-    if (!tg.initData) return 'Telegram authentication data is unavailable. Reopen the app from Telegram.'
     return ''
   })
 
   useEffect(() => {
-    if (!tg) return
-
-    tg.ready()
-    tg.expand()
-    if (!tg.initData) return
-
     let active = true
-    fetch(`${API_BASE_URL}/api/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg.initData },
-      body: JSON.stringify({ start_parameter: tg.initDataUnsafe?.start_param || '' }),
+    Promise.resolve().then(() => {
+      if (!active) return
+      const rawInitData = getTelegramInitData()
+      setInitData(rawInitData)
+      if (!rawInitData) {
+        setErrorMessage('Telegram authentication data is unavailable. Reopen the app from Telegram.')
+        setStatus('error')
+        return
+      }
+
+      authenticatedFetch('/api/users', rawInitData, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start_parameter: tg?.initDataUnsafe?.start_param || '' }),
+      })
+        .then(async (response) => {
+          const data = await response.json()
+          if (!response.ok) throw new Error(data.message || 'Could not load your account.')
+          return data.user
+        })
+        .then((currentUser) => {
+          if (active) {
+            setUser(currentUser)
+            setStatus('loaded')
+          }
+        })
+        .catch((error) => {
+          if (active) {
+            setErrorMessage(error.message || 'Network error. Please try again.')
+            setStatus('error')
+          }
+        })
     })
-      .then(async (response) => {
-        const data = await response.json()
-        if (!response.ok) throw new Error(data.message || 'Could not load your account.')
-        return data.user
-      })
-      .then((currentUser) => {
-        if (active) {
-          setUser(currentUser)
-          setStatus('loaded')
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          setErrorMessage(error.message || 'Network error. Please try again.')
-          setStatus('error')
-        }
-      })
 
     return () => { active = false }
   }, [tg])
@@ -86,20 +91,22 @@ function App() {
 
       {activeView === 'wallet' ? (
         <Wallet
-          initData={tg?.initData}
+          initData={initData}
           initialBalance={user?.balance}
           onBalanceUpdate={updateBalance}
         />
       ) : activeView === 'referrals' ? (
-        <Referral initData={tg?.initData} />
+        <Referral initData={initData} />
       ) : activeView === 'daily-bonus' ? (
-        <DailyBonus initData={tg?.initData} onBalanceUpdate={updateBalance} />
+        <DailyBonus initData={initData} onBalanceUpdate={updateBalance} />
       ) : activeView === 'circle' ? (
-        <CircleChallenge initData={tg?.initData} />
+        <CircleChallenge initData={initData} />
+      ) : activeView === 'tasks' ? (
+        <main className="tasks-view"><h2>Tasks</h2><p>New tasks will be added soon.</p></main>
       ) : (
         <>
           <section className="balance-card" aria-live="polite">
-            <p>Your Balance</p>
+            <p>Available Balance</p>
             {status === 'loading' ? (
               <h2>Loading...</h2>
             ) : status === 'error' ? (
@@ -107,7 +114,7 @@ function App() {
             ) : (
               <>
                 <h2>{formatUsd(user?.balance)}</h2>
-                <span>{Number(user?.coins ?? 0).toLocaleString()} Coins</span>
+                <span>Withdrawable USD balance</span>
               </>
             )}
             {status === 'error' && <p className="account-error-message">{errorMessage}</p>}
@@ -128,17 +135,17 @@ function App() {
           </button>
 
           <section className="quick-actions">
-            <button className="action-card">
+            <button className="action-card action-card-primary" type="button" disabled>
               <span className="action-icon"><CircleDollarSign aria-hidden="true" /></span>
               <strong>Watch &amp; Earn</strong>
-              <small>Earn $0.05 -- $0.20</small>
+              <small>Rewarded ads are not available right now.</small>
             </button>
-            <button className="action-card" onClick={() => setActiveView('circle')}>
+            <button className="action-card" type="button" onClick={() => setActiveView('circle')}>
               <span className="action-icon"><CircleDashed aria-hidden="true" /></span>
               <strong>Circle Challenge</strong>
               <small>Win up to $10 daily</small>
             </button>
-            <button className="action-card" onClick={() => setActiveView('referrals')}>
+            <button className="action-card" type="button" onClick={() => setActiveView('referrals')}>
               <span className="action-icon"><UserRoundPlus aria-hidden="true" /></span>
               <strong>Refer &amp; Earn</strong>
               <small>Invite friends</small>
@@ -159,8 +166,8 @@ function App() {
         <button aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => setActiveView('home')}>
           <House aria-hidden="true" /><span>Home</span>
         </button>
-        <button><Gamepad2 aria-hidden="true" /><span>Play</span></button>
-        <button><ListChecks aria-hidden="true" /><span>Tasks</span></button>
+          <button aria-current={activeView === 'circle' ? 'page' : undefined} onClick={() => setActiveView('circle')}><Gamepad2 aria-hidden="true" /><span>Play</span></button>
+        <button aria-current={activeView === 'tasks' ? 'page' : undefined} onClick={() => setActiveView('tasks')}><ListChecks aria-hidden="true" /><span>Tasks</span></button>
         <button aria-current={activeView === 'referrals' ? 'page' : undefined} onClick={() => setActiveView('referrals')}><UserRoundPlus aria-hidden="true" /><span>Refer</span></button>
         <button aria-current={activeView === 'wallet' ? 'page' : undefined} onClick={() => setActiveView('wallet')}>
           <WalletCards aria-hidden="true" /><span>Wallet</span>

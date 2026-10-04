@@ -89,3 +89,34 @@
 @keyframes circle-modal-in { from { opacity: 0; transform: translateY(15px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .circle-modal-backdrop, .circle-result-modal { animation-duration: .01ms; } }
 @media (max-width: 360px) { .circle-pool-card, .circle-play-card, .circle-board-card { padding: 13px; } .circle-pool-total { font-size: 34px; } .circle-prize-places strong { font-size: 14px; } }
+
+.circle-heading-icon, .circle-pool-card, .circle-play-card, .circle-board-card, .circle-prize-places > div,
+.circle-promo, .circle-result-modal { border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-card); }
+.circle-heading-icon { color: var(--accent-strong); }
+.circle-heading h2, .circle-section-heading h3, .circle-result-modal h2 { color: var(--text); }
+.circle-heading p, .circle-section-heading p, .circle-instructions, .circle-prize-footnote, .circle-unlock-note { color: var(--text-muted); }
+.circle-pool-top, .circle-active-progress > div, .circle-pool-range { color: var(--text-muted); }
+.circle-pool-total { font-size: 34px; }
+.circle-prize-places > div { background: var(--surface-muted); }
+.circle-prize-places span, .circle-promo p, .circle-prize-footnote { color: var(--text-muted); }
+.circle-promo { border-radius: 12px; background: var(--surface-raised); }
+.circle-promo > svg, .circle-section-heading h3 svg, .circle-section-heading > svg, .circle-your-score svg { color: var(--accent-strong); }
+.circle-progress-track { background: #2a342e; }
+.circle-progress-track i { background: var(--accent); }
+.circle-canvas-wrap { border-color: #394840; border-radius: 14px; background: #0e1412; }
+.circle-live-score { color: #edf5ef; text-shadow: none; }
+.circle-live-score span { color: var(--text-muted); }
+.circle-submit-button, .circle-modal-primary { border: 1px solid #3d7658; border-radius: var(--radius-control); background: #254633; color: #e5f4eb; box-shadow: none; }
+.circle-practice-button, .circle-modal-secondary { border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-raised); color: var(--text); }
+.circle-unlock-button { border-color: var(--border); border-radius: var(--radius-control); background: var(--surface-raised); color: var(--text); }
+.circle-your-score strong, .circle-result-score { color: var(--accent-strong); text-shadow: none; }
+.circle-success { border: 1px solid #35523f; background: #17231c; color: #b7dbc3; }
+.circle-board-list li, .circle-board-list li.circle-board-self { border-color: var(--border); background: var(--surface-muted); }
+.circle-board-list li.circle-board-self { outline: 1px solid #41664d; }
+.circle-player-name, .circle-board-list li > strong { color: var(--text); }
+.circle-result-modal { border-radius: 18px; animation-duration: .16s; }
+.circle-result-modal::before { display: none; }
+.circle-result-orbit { border-color: var(--border); border-radius: 14px; background: var(--surface-raised); color: var(--accent-strong); box-shadow: none; }
+.circle-result-eyebrow { color: var(--accent-strong); }
+.circle-result-copy, .circle-modal-footnote, .circle-modal-ad-message { color: var(--text-muted); }
+.circle-modal-backdrop { backdrop-filter: none; animation-duration: .12s; }

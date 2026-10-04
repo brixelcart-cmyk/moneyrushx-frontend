@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { API_BASE_URL } from './api.js'
+import { authenticatedFetch } from './api.js'
 import './Wallet.css'
 
 const NETWORKS = ['TRC20', 'ERC20', 'BEP20']
@@ -22,8 +22,6 @@ function Wallet({ initData, initialBalance, onBalanceUpdate }) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const headers = useCallback(() => ({ 'X-Telegram-Init-Data': initData || '' }), [initData])
-
   const loadWallet = useCallback(async () => {
     if (!initData) {
       setError('Telegram authentication data is unavailable. Reopen the wallet from Telegram.')
@@ -34,8 +32,8 @@ function Wallet({ initData, initialBalance, onBalanceUpdate }) {
     setError('')
     try {
       const [walletResponse, historyResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/wallet`, { headers: headers() }),
-        fetch(`${API_BASE_URL}/api/withdrawals`, { headers: headers() }),
+        authenticatedFetch('/api/wallet', initData),
+        authenticatedFetch('/api/withdrawals', initData),
       ])
       const [walletData, historyData] = await Promise.all([walletResponse.json(), historyResponse.json()])
       if (!walletResponse.ok) throw new Error(walletData.message || 'Could not load your wallet.')
@@ -48,7 +46,7 @@ function Wallet({ initData, initialBalance, onBalanceUpdate }) {
     } finally {
       setLoading(false)
     }
-  }, [headers, initData, onBalanceUpdate])
+  }, [initData, onBalanceUpdate])
 
   useEffect(() => {
     const timer = window.setTimeout(() => { loadWallet() }, 0)
@@ -71,9 +69,9 @@ function Wallet({ initData, initialBalance, onBalanceUpdate }) {
     }
     setSubmitting(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/withdrawals`, {
+      const response = await authenticatedFetch('/api/withdrawals', initData, {
         method: 'POST',
-        headers: { ...headers(), 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount_usd: amount, wallet_address: walletAddress, network }),
       })
       const data = await response.json()
@@ -95,9 +93,8 @@ function Wallet({ initData, initialBalance, onBalanceUpdate }) {
     setError('')
     setMessage('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/withdrawals/${encodeURIComponent(id)}/cancel`, {
+      const response = await authenticatedFetch(`/api/withdrawals/${encodeURIComponent(id)}/cancel`, initData, {
         method: 'POST',
-        headers: headers(),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || 'Could not cancel withdrawal.')
@@ -122,7 +119,7 @@ function Wallet({ initData, initialBalance, onBalanceUpdate }) {
 
       <form className="wallet-form" onSubmit={submitWithdrawal}>
         <h3>Request a withdrawal</h3>
-        <p className="wallet-minimum">Minimum withdrawal: $20.00</p>
+        <p className="wallet-minimum">Minimum withdrawal: $20.00. Paid manually after review in USDT on TRC20, ERC20, or BEP20.</p>
 
         <label htmlFor="wallet-address">USDT wallet address</label>
         <input
