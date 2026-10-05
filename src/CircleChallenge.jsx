@@ -115,7 +115,7 @@ export default function CircleChallenge({ initData }) {
     context.arc(centerX, centerY, target.radius, corner.angle - guideArc / 2, corner.angle + guideArc / 2)
     context.setLineDash([6, 9])
     context.lineWidth = 4
-    context.strokeStyle = 'rgba(177, 190, 178, .46)'
+    context.strokeStyle = 'rgba(190, 175, 255, .48)'
     context.stroke()
     context.restore()
   }, [challenge])
@@ -136,7 +136,7 @@ export default function CircleChallenge({ initData }) {
       context.beginPath()
       context.moveTo(a.x, a.y)
       context.lineTo(b.x, b.y)
-      context.strokeStyle = '#73c99a'
+      context.strokeStyle = '#b9a2ff'
       context.lineWidth = 7
       context.shadowBlur = 0
       context.stroke()

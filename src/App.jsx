@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  ArrowUpRight,
   CircleDashed,
   CircleDollarSign,
   Gift,
@@ -8,6 +9,8 @@ import {
   ListChecks,
   UserRoundPlus,
   WalletCards,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react'
 import Wallet from './Wallet.jsx'
 import Referral from './Referral.jsx'
@@ -82,11 +85,14 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <div>
-          <p className="welcome">Welcome {firstName}</p>
-          <h1>MoneyRushX</h1>
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true"><CircleDollarSign /></span>
+          <div>
+            <p className="welcome">WELCOME BACK</p>
+            <h1>Hey, {firstName}</h1>
+          </div>
         </div>
-        <div className="avatar">{avatarLetter}</div>
+        <div className="avatar" aria-label={`${firstName}'s profile`}>{avatarLetter}</div>
       </header>
 
       {activeView === 'wallet' ? (
@@ -102,64 +108,77 @@ function App() {
       ) : activeView === 'circle' ? (
         <CircleChallenge initData={initData} />
       ) : activeView === 'tasks' ? (
-        <main className="tasks-view"><h2>Tasks</h2><p>New tasks will be added soon.</p></main>
+        <main className="tasks-view">
+          <div className="screen-heading"><span className="screen-icon"><ListChecks aria-hidden="true" /></span><div><p className="section-kicker">YOUR NEXT STEP</p><h2>Tasks</h2></div></div>
+          <div className="tasks-empty-art" aria-hidden="true"><Sparkles /><span /></div>
+          <h3>More ways to earn are on the way</h3>
+          <p>New tasks will be added soon. Check back here for fresh opportunities.</p>
+        </main>
       ) : (
-        <>
+        <main className="home-view">
           <section className="balance-card" aria-live="polite">
-            <p>Available Balance</p>
+            <div className="balance-card-top">
+              <div>
+                <p className="balance-eyebrow">YOUR WALLET</p>
+                <p className="balance-label">Available balance <span>USD</span></p>
+              </div>
+              <span className="balance-shield" aria-label="Secure account"><ShieldCheck aria-hidden="true" /></span>
+            </div>
             {status === 'loading' ? (
-              <h2>Loading...</h2>
+              <div className="balance-loading" role="status" aria-label="Loading balance"><span /><small>Loading balance…</small></div>
             ) : status === 'error' ? (
               <h2 className="account-error">Account unavailable</h2>
             ) : (
               <>
-                <h2>{formatUsd(user?.balance)}</h2>
-                <span>Withdrawable USD balance</span>
+                <h2 className="balance-amount">{formatUsd(user?.balance)}</h2>
+                <span className="balance-caption">Your current MoneyRushX balance</span>
               </>
             )}
             {status === 'error' && <p className="account-error-message">{errorMessage}</p>}
+            <div className="balance-card-bottom">
+              <span className="account-status"><i />{status === 'loaded' ? 'Account connected' : status === 'loading' ? 'Connecting securely' : 'Connection issue'}</span>
+              <button className="balance-action" type="button" onClick={() => setActiveView('wallet')}>Open wallet <ArrowUpRight aria-hidden="true" /></button>
+            </div>
           </section>
 
-          <button
-            className="daily-home-link"
-            type="button"
-            onClick={() => setActiveView('daily-bonus')}
-            aria-label="Open Daily Bonus and claim today's reward"
-          >
-            <span className="daily-home-link-icon"><Gift aria-hidden="true" /></span>
-            <span className="daily-home-link-copy">
-              <strong>Daily Bonus</strong>
-              <small>Claim today’s login reward and keep your streak</small>
-            </span>
-            <span className="daily-home-link-arrow" aria-hidden="true">›</span>
-          </button>
+          <section className="today-section">
+            <div className="home-section-title">
+              <div><p className="section-kicker">TODAY’S OPPORTUNITY</p><h2>Keep your momentum</h2></div>
+            </div>
+            <button className="daily-home-link" type="button" onClick={() => setActiveView('daily-bonus')} aria-label="Open Daily Bonus">
+              <span className="daily-home-link-icon"><Gift aria-hidden="true" /></span>
+              <span className="daily-home-link-copy"><strong>Daily Bonus</strong><small>Visit today’s reward and keep your streak going</small></span>
+              <span className="daily-home-link-arrow"><ArrowUpRight aria-hidden="true" /></span>
+            </button>
+          </section>
 
-          <section className="quick-actions">
-            <button className="action-card action-card-primary" type="button" disabled>
-              <span className="action-icon"><CircleDollarSign aria-hidden="true" /></span>
-              <strong>Watch &amp; Earn</strong>
-              <small>Rewarded ads are not available right now.</small>
-            </button>
-            <button className="action-card" type="button" onClick={() => setActiveView('circle')}>
-              <span className="action-icon"><CircleDashed aria-hidden="true" /></span>
-              <strong>Circle Challenge</strong>
-              <small>Win up to $10 daily</small>
-            </button>
-            <button className="action-card" type="button" onClick={() => setActiveView('referrals')}>
-              <span className="action-icon"><UserRoundPlus aria-hidden="true" /></span>
-              <strong>Refer &amp; Earn</strong>
-              <small>Invite friends</small>
-            </button>
+          <section className="earn-section">
+            <div className="home-section-title">
+              <div><p className="section-kicker">MAKE IT COUNT</p><h2>Earn more</h2></div>
+              <span className="section-mark"><Sparkles aria-hidden="true" /></span>
+            </div>
+            <div className="quick-actions">
+              <button className="action-card action-card-challenge" type="button" onClick={() => setActiveView('circle')}>
+                <span className="action-icon"><CircleDashed aria-hidden="true" /></span><span className="action-arrow"><ArrowUpRight aria-hidden="true" /></span>
+                <strong>Circle Challenge</strong><small>Put your precision to the test</small>
+              </button>
+              <button className="action-card action-card-referral" type="button" onClick={() => setActiveView('referrals')}>
+                <span className="action-icon"><UserRoundPlus aria-hidden="true" /></span><span className="action-arrow"><ArrowUpRight aria-hidden="true" /></span>
+                <strong>Refer &amp; Earn</strong><small>Invite friends and earn together</small>
+              </button>
+              <button className="action-card action-card-disabled" type="button" disabled>
+                <span className="action-icon"><CircleDollarSign aria-hidden="true" /></span><span className="action-status">Coming soon</span>
+                <strong>Watch &amp; Earn</strong><small>Rewarded ads aren’t available right now</small>
+              </button>
+            </div>
           </section>
 
           <section className="withdraw-card">
-            <div>
-              <p>Withdrawal</p>
-              <strong>$20.00 minimum</strong>
-            </div>
-            <button onClick={() => setActiveView('wallet')}>Withdraw</button>
+            <span className="withdraw-card-icon"><WalletCards aria-hidden="true" /></span>
+            <div className="withdraw-card-copy"><p>READY WHEN YOU ARE</p><strong>Withdraw your earnings</strong><small>Minimum withdrawal $20.00</small></div>
+            <button onClick={() => setActiveView('wallet')} aria-label="Open wallet to withdraw">Open <ArrowUpRight aria-hidden="true" /></button>
           </section>
-        </>
+        </main>
       )}
 
       <nav className="bottom-nav" aria-label="Main navigation">

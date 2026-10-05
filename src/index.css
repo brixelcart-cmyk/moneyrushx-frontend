@@ -1,40 +1,58 @@
 :root {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #edf2ef;
-  background: #0b100f;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f5f4ff;
+  background: #090a12;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --surface: #121917;
-  --surface-raised: #17201c;
-  --surface-muted: #0f1513;
-  --border: #27332d;
-  --text: #edf2ef;
-  --text-muted: #98a69e;
-  --text-subtle: #718078;
-  --accent: #56bd8a;
-  --accent-strong: #72d5a2;
-  --accent-soft: #1a3025;
-  --danger: #e59a9a;
-  --radius-card: 16px;
-  --radius-control: 11px;
-  --shadow-card: 0 8px 24px rgb(0 0 0 / 14%);
+  --surface: rgb(19 20 34 / 78%);
+  --surface-raised: rgb(27 28 46 / 84%);
+  --surface-muted: rgb(12 13 23 / 78%);
+  --border: rgb(175 172 220 / 13%);
+  --border-strong: rgb(175 172 220 / 22%);
+  --text: #f5f4ff;
+  --text-muted: #aaaabd;
+  --text-subtle: #77788f;
+  --accent: #a48bff;
+  --accent-strong: #c0adff;
+  --accent-blue: #77b8ff;
+  --accent-soft: rgb(142 112 255 / 14%);
+  --success: #73ddb5;
+  --danger: #ff9aab;
+  --warning: #f4c978;
+  --radius-card: 20px;
+  --radius-control: 13px;
+  --shadow-card: 0 16px 42px rgb(0 0 0 / 24%);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
-body { min-height: 100vh; background: #0b100f; }
+html { background: #090a12; }
+body {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: radial-gradient(ellipse at 50% -18%, #211b3c 0%, #10111d 37%, #090a12 72%);
+  color: var(--text);
+}
+body::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 90% 18%, rgb(64 105 210 / 8%), transparent 32%), radial-gradient(ellipse at 2% 54%, rgb(132 75 235 / 7%), transparent 35%);
+  content: "";
+}
 body, button, input, select { font: inherit; }
 button { color: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 3px;
 }
 h1, h2, h3, p { margin-top: 0; }
 svg { flex-shrink: 0; }
-
-#root { width: 100%; }
+#root { position: relative; z-index: 1; width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
