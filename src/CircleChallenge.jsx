@@ -99,20 +99,12 @@ export default function CircleChallenge({ initData }) {
     const context = canvas.getContext('2d')
     context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
-    const corners = [
-      { x: 1, y: 1, angle: -Math.PI * 0.75 },
-      { x: CANVAS_SIZE - 1, y: 1, angle: -Math.PI * 0.25 },
-      { x: CANVAS_SIZE - 1, y: CANVAS_SIZE - 1, angle: Math.PI * 0.25 },
-      { x: 1, y: CANVAS_SIZE - 1, angle: Math.PI * 0.75 },
-    ]
-    const corner = corners[Math.floor(Math.random() * corners.length)]
-    const centerX = corner.x === 1 ? target.radius * 1.08 : CANVAS_SIZE - target.radius * 1.08
-    const centerY = corner.y === 1 ? target.radius * 1.08 : CANVAS_SIZE - target.radius * 1.08
     const guideArc = Math.PI * 70 / 180
+    const guideStart = Math.random() * Math.PI * 2
 
     context.save()
     context.beginPath()
-    context.arc(centerX, centerY, target.radius, corner.angle - guideArc / 2, corner.angle + guideArc / 2)
+    context.arc(target.x, target.y, target.radius, guideStart, guideStart + guideArc)
     context.setLineDash([6, 9])
     context.lineWidth = 4
     context.strokeStyle = 'rgba(190, 175, 255, .48)'
